@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>공룡 친구들의 동화 나라</title>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&family=Nanum+Pen+Script&display=swap" rel="stylesheet" />
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Jua', sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── 메인 화면 ── */
+    #main-screen {
+      position: relative;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #bg {
+      position: fixed;
+      inset: 0;
+      background: url('배경.png') center/cover no-repeat;
+      z-index: 0;
+    }
+    #bg::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.18);
+    }
+
+    .site-title {
+      position: relative;
+      z-index: 1;
+      color: #fff;
+      font-size: clamp(2rem, 5vw, 3.6rem);
+      text-shadow: 0 4px 18px rgba(0,0,0,0.55);
+      letter-spacing: .08em;
+      margin-bottom: 10px;
+      text-align: center;
+    }
+    .site-subtitle {
+      position: relative;
+      z-index: 1;
+      color: #ffe87a;
+      font-size: clamp(1rem, 2.5vw, 1.5rem);
+      text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+      margin-bottom: 48px;
+      text-align: center;
+    }
+
+    /* ── 카드 그리드 (6열 1행) ── */
+    .cards-grid {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 0 18px;
+      padding: 0 24px 64px;
+      max-width: 1400px;
+      width: 100%;
+    }
+
+    @media (max-width: 900px) {
+      .cards-grid { grid-template-columns: repeat(3, 1fr); gap: 20px 14px; }
+    }
+    @media (max-width: 520px) {
+      .cards-grid { grid-template-columns: repeat(2, 1fr); gap: 14px 10px; }
+    }
+
+    .card {
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      transition: transform .3s ease;
+    }
+    .card:hover { transform: translateY(-14px) scale(1.06); }
+    .card:active { transform: translateY(-4px) scale(1.01); }
+
+    .card-img-wrap {
+      width: 100%;
+      overflow: hidden;
+      background: transparent;
+      aspect-ratio: 3/4;
+      transition: filter .3s;
+    }
+    .card:hover .card-img-wrap {
+      filter: drop-shadow(0 16px 24px rgba(0,0,0,0.5));
+    }
+    .card-img-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
+    }
+
+    .card-name {
+      margin-top: 10px;
+      color: #fff;
+      font-size: clamp(1rem, 1.4vw, 1.4rem);
+      text-shadow: 0 2px 10px rgba(0,0,0,0.6);
+      letter-spacing: .06em;
+      background: rgba(0,0,0,0.32);
+      border-radius: 999px;
+      padding: 5px 18px;
+      border: 2px solid rgba(255,232,122,0.6);
+    }
+
+    /* ── 구름 ── */
+    .cloud-layer {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+    .cloud {
+      position: absolute;
+      border-radius: 50px;
+      background: rgba(255,255,255,0.82);
+      filter: blur(6px);
+      animation: floatCloud var(--cd) linear infinite;
+      animation-delay: var(--cdl);
+      top: var(--ct);
+    }
+    .cloud::before, .cloud::after {
+      content: '';
+      position: absolute;
+      background: rgba(255,255,255,0.82);
+      border-radius: 50%;
+    }
+    .cloud::before { width: 60%; height: 160%; top: -40%; left: 15%; }
+    .cloud::after  { width: 45%; height: 130%; top: -20%; left: 50%; }
+
+    @keyframes floatCloud {
+      from { transform: translateX(-120%); }
+      to   { transform: translateX(110vw); }
+    }
+
+
+    /* ── 이야기 화면 ── */
+    #story-screen {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0,0,0,0);
+      transition: background .5s;
+    }
+    #story-screen.open {
+      display: flex;
+      animation: fadeInBg .5s forwards;
+    }
+    @keyframes fadeInBg {
+      from { background: rgba(0,0,0,0); }
+      to   { background: rgba(0,0,0,0.82); }
+    }
+
+    .story-box {
+      position: relative;
+      max-width: 600px;
+      width: 90%;
+      background: linear-gradient(145deg, #fffde7, #fff9c4);
+      border-radius: 32px;
+      padding: 48px 40px 40px;
+      box-shadow: 0 24px 80px rgba(0,0,0,0.5);
+      text-align: center;
+      animation: popIn .4s ease;
+    }
+    @keyframes popIn {
+      from { transform: scale(.7); opacity: 0; }
+      to   { transform: scale(1);  opacity: 1; }
+    }
+
+    /* ── 책 선택 뷰 ── */
+    .books-view {
+      display: none;
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 1400px;
+      padding: 0 40px 64px;
+      align-items: center;
+      gap: 48px;
+      animation: slideIn .4s ease;
+    }
+    .books-view.active { display: flex; }
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(40px); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
+
+    /* 선택된 캐릭터 */
+    .selected-char {
+      flex-shrink: 0;
+      width: clamp(140px, 18vw, 240px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+    .selected-char img {
+      width: 100%;
+      object-fit: contain;
+      filter: drop-shadow(0 12px 24px rgba(0,0,0,0.5));
+    }
+    .selected-char-name {
+      color: #fff;
+      font-size: clamp(1.1rem, 2vw, 1.6rem);
+      text-shadow: 0 2px 10px rgba(0,0,0,0.6);
+      background: rgba(0,0,0,0.32);
+      border-radius: 999px;
+      padding: 6px 20px;
+      border: 2px solid rgba(255,232,122,0.6);
+    }
+
+    /* 책 선반 (가로 스크롤) */
+    .book-shelf {
+      flex: 1;
+      display: flex;
+      gap: 28px;
+      overflow-x: auto;
+      padding: 20px 8px 28px;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(255,255,255,0.3) transparent;
+    }
+    .book-shelf::-webkit-scrollbar { height: 6px; }
+    .book-shelf::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.3); border-radius: 3px; }
+
+    .book-item {
+      flex-shrink: 0;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+      transition: transform .25s;
+    }
+    .book-item:hover { transform: translateY(-10px) scale(1.04); }
+
+    .book-cover {
+      width: clamp(130px, 14vw, 200px);
+      aspect-ratio: 3/4;
+      border-radius: 4px 14px 14px 4px;
+      object-fit: cover;
+      box-shadow: -5px 0 0 #b8956a, 0 10px 32px rgba(0,0,0,0.45);
+    }
+
+    .book-title {
+      color: #fff;
+      font-size: clamp(.95rem, 1.4vw, 1.2rem);
+      text-shadow: 0 2px 8px rgba(0,0,0,0.6);
+      text-align: center;
+    }
+
+    .no-books {
+      color: rgba(255,255,255,0.7);
+      font-size: 1.2rem;
+      text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+    }
+
+    /* 돌아가기 버튼 */
+    .btn-back {
+      position: relative;
+      z-index: 1;
+      margin-bottom: 24px;
+      background: rgba(0,0,0,0.3);
+      border: 2px solid rgba(255,255,255,0.3);
+      color: #fff;
+      font-family: 'Jua', sans-serif;
+      font-size: 1.1rem;
+      padding: 10px 24px;
+      border-radius: 999px;
+      cursor: pointer;
+      backdrop-filter: blur(6px);
+      transition: background .2s;
+      align-self: flex-start;
+      display: none;
+    }
+    .btn-back.active { display: block; }
+    .btn-back:hover { background: rgba(0,0,0,0.5); }
+
+    /* ── 별 장식 ── */
+    .stars {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+    .star {
+      position: absolute;
+      border-radius: 50%;
+      background: #fff;
+      opacity: 0;
+      animation: twinkle var(--d) ease-in-out infinite;
+      animation-delay: var(--dl);
+    }
+    @keyframes twinkle {
+      0%,100% { opacity: 0; transform: scale(.5); }
+      50%      { opacity: .9; transform: scale(1); }
+    }
+  </style>
+</head>
+<body>
+
+<div id="bg"></div>
+
+<!-- 별 장식 -->
+<div class="stars" id="stars"></div>
+
+<!-- 구름 -->
+<div class="cloud-layer" id="clouds"></div>
+
+
+<!-- 메인 화면 -->
+<div id="main-screen">
+  <h1 class="site-title">✨ 공룡 친구들의 동화 나라 ✨</h1>
+  <p class="site-subtitle">카드를 눌러 이야기 속으로 들어가 봐요!</p>
+
+  <div class="cards-grid">
+    <div class="card" onclick="openStory('티노')">
+      <div class="card-img-wrap">
+        <img src="티노_캐릭터카드_nobg.png" alt="티노" />
+      </div>
+      <span class="card-name">🦖 티노</span>
+    </div>
+    <div class="card" onclick="openStory('디노')">
+      <div class="card-img-wrap">
+        <img src="디노_캐릭터카드_nobg.png" alt="디노" />
+      </div>
+      <span class="card-name">🦕 디노</span>
+    </div>
+    <div class="card" onclick="openStory('브리니')">
+      <div class="card-img-wrap">
+        <img src="브리니_캐릭터카드_nobg.png" alt="브리니" />
+      </div>
+      <span class="card-name">🌿 브리니</span>
+    </div>
+    <div class="card" onclick="openStory('철갑이')">
+      <div class="card-img-wrap">
+        <img src="철갑이_캐릭터카드_nobg.png" alt="철갑이" />
+      </div>
+      <span class="card-name">🛡️ 철갑이</span>
+    </div>
+    <div class="card" onclick="openStory('트리')">
+      <div class="card-img-wrap">
+        <img src="트리_캐릭터카드_nobg.png" alt="트리" />
+      </div>
+      <span class="card-name">🔱 트리</span>
+    </div>
+    <div class="card" onclick="openStory('프티')">
+      <div class="card-img-wrap">
+        <img src="프티_캐릭터카드_nobg.png" alt="프티" />
+      </div>
+      <span class="card-name">🪂 프티</span>
+    </div>
+  </div>
+</div>
+
+<!-- 책 선택 화면 -->
+<div id="books-screen" style="display:none; position:relative; z-index:1; min-height:100vh; flex-direction:column; align-items:center; justify-content:center;">
+  <button class="btn-back" onclick="showAllChars()">← 공룡 친구들</button>
+  <div class="books-view" id="books-view">
+    <div class="selected-char">
+      <img id="selected-char-img" src="" alt="" />
+      <span class="selected-char-name" id="selected-char-name"></span>
+    </div>
+    <div class="book-shelf" id="book-shelf"></div>
+  </div>
+</div>
+
+<script>
+  // ── 구름 생성 ──
+  const cloudsEl = document.getElementById('clouds');
+  for (let i = 0; i < 6; i++) {
+    const c = document.createElement('div');
+    c.className = 'cloud';
+    const w = 120 + Math.random() * 180;
+    c.style.cssText = `
+      width:${w}px; height:${w*0.38}px;
+      --ct:${Math.random()*40}%;
+      --cd:${(18 + Math.random()*22).toFixed(1)}s;
+      --cdl:-${(Math.random()*20).toFixed(1)}s;
+      opacity:${(0.5 + Math.random()*0.4).toFixed(2)};
+    `;
+    cloudsEl.appendChild(c);
+  }
+
+// ── 별 생성 ──
+  const starsEl = document.getElementById('stars');
+  for (let i = 0; i < 60; i++) {
+    const s = document.createElement('div');
+    s.className = 'star';
+    const sz = Math.random() * 4 + 2;
+    s.style.cssText = `
+      width:${sz}px; height:${sz}px;
+      top:${Math.random()*100}%; left:${Math.random()*100}%;
+      --d:${(Math.random()*4+2).toFixed(1)}s;
+      --dl:${(Math.random()*6).toFixed(1)}s;
+    `;
+    starsEl.appendChild(s);
+  }
+
+  // ── 캐릭터별 책 목록 ──
+  const characters = {
+    티노:   { emoji: '🦖', img: '티노_캐릭터카드_nobg.png',   viewer: '티노/index.html' },
+    디노:   { emoji: '🦕', img: '디노_캐릭터카드_nobg.png',   viewer: '디노/index.html' },
+    브리니: { emoji: '🌿', img: '브리니_캐릭터카드_nobg.png', books: [] },
+    철갑이: { emoji: '🛡️', img: '철갑이_캐릭터카드_nobg.png', books: [] },
+    트리:   { emoji: '🔱', img: '트리_캐릭터카드_nobg.png',   books: [] },
+    프티:   { emoji: '🪂', img: '프티_캐릭터카드_nobg.png',   books: [] },
+  };
+
+  function openStory(name) {
+    const c = characters[name];
+    if (c.viewer) {
+      location.href = c.viewer;
+    }
+  }
+
+  function showAllChars() {
+    document.getElementById('main-screen').style.display = 'flex';
+    document.getElementById('btn-back').classList.remove('active');
+    document.getElementById('books-view').classList.remove('active');
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>디노의 이야기</title>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet" />
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Jua', sans-serif;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      background: #000;
+    }
+
+    .slide-container {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+    }
+    .page-img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      opacity: 0;
+      transition: opacity .45s ease;
+    }
+    .page-img.active { opacity: 1; }
+
+    .zone {
+      position: fixed;
+      top: 0;
+      bottom: 0;
+      width: 25%;
+      z-index: 10;
+      cursor: pointer;
+    }
+    .zone.prev { left: 0; }
+    .zone.next { right: 0; }
+
+    .btn-home {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 30;
+      color: #fff;
+      font-family: 'Jua', sans-serif;
+      font-size: 2.4rem;
+      text-decoration: none;
+      background: rgba(0,0,0,0.38);
+      border: 2px solid rgba(255,255,255,0.4);
+      border-radius: 999px;
+      padding: 14px 32px;
+      backdrop-filter: blur(8px);
+      transition: background .2s, transform .2s;
+      white-space: nowrap;
+    }
+    .btn-home:hover {
+      background: rgba(0,0,0,0.6);
+      transform: translateX(-50%) scale(1.05);
+    }
+
+    .page-counter {
+      position: fixed;
+      top: 18px;
+      right: 18px;
+      z-index: 30;
+      color: #fff;
+      font-size: .95rem;
+      background: rgba(0,0,0,0.28);
+      border: 1.5px solid rgba(255,255,255,0.2);
+      border-radius: 999px;
+      padding: 8px 18px;
+      backdrop-filter: blur(6px);
+    }
+
+    .dots {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 9px;
+      z-index: 30;
+    }
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.35);
+      cursor: pointer;
+      transition: background .3s, transform .3s;
+    }
+    .dot.active { background: #fff; transform: scale(1.5); }
+
+    .tutorial {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      background: rgba(0,0,0,0.62);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(3px);
+      cursor: pointer;
+    }
+    .tutorial.hide {
+      animation: fadeOut .4s ease forwards;
+      pointer-events: none;
+    }
+    @keyframes fadeOut { to { opacity: 0; } }
+
+    .tut-inner {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .tut-prev {
+      width: 25%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      border-right: 2px dashed rgba(255,255,255,0.3);
+    }
+    .tut-next {
+      width: 25%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      border-left: 2px dashed rgba(255,255,255,0.3);
+    }
+
+    .tut-icon {
+      font-size: 6rem;
+    }
+    .tut-prev .tut-icon { animation: bounceL .8s ease-in-out infinite alternate; }
+    .tut-next .tut-icon { animation: bounceR .8s ease-in-out infinite alternate; }
+    @keyframes bounceL {
+      from { transform: translateX(0); }
+      to   { transform: translateX(-10px); }
+    }
+    @keyframes bounceR {
+      from { transform: translateX(0); }
+      to   { transform: translateX(10px); }
+    }
+
+    .tut-label {
+      color: #fff;
+      font-size: clamp(2rem, 3.5vw, 4rem);
+      text-align: center;
+      text-shadow: 0 2px 8px rgba(0,0,0,0.6);
+      line-height: 1.8;
+      padding: 0 16px;
+    }
+
+    .tut-center {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+    }
+    .tut-title {
+      color: #ffe87a;
+      font-size: clamp(2.4rem, 5vw, 4.5rem);
+      text-shadow: 0 2px 12px rgba(0,0,0,0.7);
+    }
+    .tut-start {
+      margin-top: 16px;
+      color: rgba(255,255,255,0.7);
+      font-size: clamp(1.4rem, 2.5vw, 3rem);
+      animation: blink 1.4s ease-in-out infinite;
+    }
+    @keyframes blink {
+      0%,100% { opacity: .5; }
+      50%      { opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="slide-container" id="stage"></div>
+
+<div class="zone prev" onclick="move(-1)"></div>
+<div class="zone next" onclick="move(1)"></div>
+
+<a class="btn-home" href="../index.html">← 처음으로</a>
+
+<span class="page-counter" id="counter">읽는 중...</span>
+
+<div class="dots" id="dots"></div>
+
+<div class="tutorial" id="tutorial" onclick="closeTutorial()">
+  <div class="tut-inner">
+    <div class="tut-prev">
+      <div class="tut-icon">👈</div>
+      <div class="tut-label">여기를 누르면<br/>이전 페이지로<br/>돌아가요!</div>
+    </div>
+    <div class="tut-center">
+      <div class="tut-title">🦕 디노의 이야기</div>
+      <div class="tut-label" style="color:rgba(255,255,255,0.8);">화면을 눌러서<br/>이야기를 넘겨봐요!</div>
+      <div class="tut-start">화면을 눌러 시작하기 ✨</div>
+    </div>
+    <div class="tut-next">
+      <div class="tut-icon">👉</div>
+      <div class="tut-label">여기를 누르면<br/>다음 페이지로<br/>넘어가요!</div>
+    </div>
+  </div>
+</div>
+
+<script>
+  let pages = [];
+  let cur = 0;
+  const stage   = document.getElementById('stage');
+  const dotsEl  = document.getElementById('dots');
+  const counter = document.getElementById('counter');
+
+  function detectPages(index, done) {
+    const img = new Image();
+    img.onload  = () => { pages.push(index + '.png'); detectPages(index + 1, done); };
+    img.onerror = () => done();
+    img.src = index + '.png?t=' + Date.now();
+  }
+
+  function buildViewer() {
+    stage.innerHTML = '';
+    dotsEl.innerHTML = '';
+    cur = 0;
+
+    pages.forEach((src, i) => {
+      const img = document.createElement('img');
+      img.className = 'page-img' + (i === 0 ? ' active' : '');
+      img.src = src;
+      img.alt = i === 0 ? '표지' : `${i}페이지`;
+      stage.appendChild(img);
+
+      const dot = document.createElement('div');
+      dot.className = 'dot' + (i === 0 ? ' active' : '');
+      dot.onclick = () => goTo(i);
+      dotsEl.appendChild(dot);
+    });
+
+    counter.textContent = `1 / ${pages.length}`;
+  }
+
+  function goTo(n) {
+    document.querySelectorAll('.page-img')[cur].classList.remove('active');
+    document.querySelectorAll('.dot')[cur].classList.remove('active');
+    cur = n;
+    document.querySelectorAll('.page-img')[cur].classList.add('active');
+    document.querySelectorAll('.dot')[cur].classList.add('active');
+    counter.textContent = `${cur + 1} / ${pages.length}`;
+  }
+
+  function move(dir) {
+    const next = cur + dir;
+    if (next >= 0 && next < pages.length) goTo(next);
+  }
+
+  function closeTutorial() {
+    const t = document.getElementById('tutorial');
+    t.classList.add('hide');
+    setTimeout(() => t.remove(), 400);
+  }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight') move(1);
+    if (e.key === 'ArrowLeft')  move(-1);
+    if (e.key === 'Escape' || e.key === ' ') closeTutorial();
+  });
+
+  detectPages(1, buildViewer);
+</script>
+</body>
+</html>
