@@ -11,7 +11,7 @@
     body {
       font-family: 'Jua', sans-serif;
       width: 100vw;
-      height: 100vh;
+      height: 100dvh;
       overflow: hidden;
       background: #000;
     }
@@ -26,13 +26,12 @@
       inset: 0;
       width: 100%;
       height: 100%;
-      object-fit: cover;
+      object-fit: contain;
       opacity: 0;
       transition: opacity .45s ease;
     }
     .page-img.active { opacity: 1; }
 
-    /* 클릭 영역 */
     .zone {
       position: fixed;
       top: 0;
@@ -40,11 +39,10 @@
       z-index: 10;
       cursor: pointer;
     }
-    .zone.prev  { left: 0;   width: 25%; }
-    .zone.next  { right: 0;  width: 25%; }
-    .zone.mid   { left: 25%; width: 50%; cursor: default; }
+    .zone.prev { left: 0;   width: 25%; }
+    .zone.next { right: 0;  width: 25%; }
+    .zone.mid  { left: 25%; width: 50%; cursor: default; }
 
-    /* 하단 UI 패널 */
     .ui-panel {
       position: fixed;
       bottom: 0;
@@ -83,10 +81,10 @@
     .bottom-row {
       display: flex;
       align-items: center;
-      gap: 20px;
+      gap: 12px;
     }
 
-    .btn-home {
+    .btn-ui {
       color: #fff;
       font-family: 'Jua', sans-serif;
       font-size: 1.2rem;
@@ -98,8 +96,9 @@
       backdrop-filter: blur(8px);
       transition: background .2s;
       white-space: nowrap;
+      cursor: pointer;
     }
-    .btn-home:hover { background: rgba(0,0,0,0.6); }
+    .btn-ui:hover { background: rgba(0,0,0,0.6); }
 
     .page-counter {
       color: #fff;
@@ -123,8 +122,9 @@
 <div class="ui-panel" id="ui-panel">
   <div class="dots" id="dots"></div>
   <div class="bottom-row">
-    <a class="btn-home" href="../index.html">← 처음으로</a>
+    <a class="btn-ui" href="../index.html">← 처음으로</a>
     <span class="page-counter" id="counter"></span>
+    <button class="btn-ui" id="btn-fs" onclick="toggleFullscreen()">⛶ 전체화면</button>
   </div>
 </div>
 
@@ -132,11 +132,37 @@
   let pages = [];
   let cur = 0;
   let hideTimer = null;
-  const stage   = document.getElementById('stage');
-  const dotsEl  = document.getElementById('dots');
-  const counter = document.getElementById('counter');
-  const panel   = document.getElementById('ui-panel');
+  let firstClick = true;
 
+  const stage  = document.getElementById('stage');
+  const dotsEl = document.getElementById('dots');
+  const counter= document.getElementById('counter');
+  const panel  = document.getElementById('ui-panel');
+  const btnFs  = document.getElementById('btn-fs');
+
+  /* 전체화면 */
+  function requestFs() {
+    const el = document.documentElement;
+    if (el.requestFullscreen)            el.requestFullscreen();
+    else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+  }
+  function exitFs() {
+    if (document.exitFullscreen)            document.exitFullscreen();
+    else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+  }
+  function isFs() {
+    return !!(document.fullscreenElement || document.webkitFullscreenElement);
+  }
+  function toggleFullscreen() {
+    isFs() ? exitFs() : requestFs();
+  }
+  document.addEventListener('fullscreenchange',       updateFsBtn);
+  document.addEventListener('webkitfullscreenchange', updateFsBtn);
+  function updateFsBtn() {
+    btnFs.textContent = isFs() ? '✕ 전체화면 끄기' : '⛶ 전체화면';
+  }
+
+  /* 페이지 이동 */
   function detectPages(index, done) {
     const img = new Image();
     img.onload  = () => { pages.push(index + '.png'); detectPages(index + 1, done); };
@@ -148,7 +174,6 @@
     stage.innerHTML = '';
     dotsEl.innerHTML = '';
     cur = 0;
-
     pages.forEach((src, i) => {
       const img = document.createElement('img');
       img.className = 'page-img' + (i === 0 ? ' active' : '');
@@ -161,7 +186,6 @@
       dot.onclick = () => goTo(i);
       dotsEl.appendChild(dot);
     });
-
     counter.textContent = `1 / ${pages.length}`;
   }
 
@@ -175,11 +199,21 @@
   }
 
   function move(dir) {
+    tryFullscreen();
     const next = cur + dir;
     if (next >= 0 && next < pages.length) goTo(next);
   }
 
+  /* 첫 클릭 시 전체화면 시도 */
+  function tryFullscreen() {
+    if (firstClick) {
+      firstClick = false;
+      requestFs();
+    }
+  }
+
   function toggleUI() {
+    tryFullscreen();
     clearTimeout(hideTimer);
     if (panel.classList.contains('visible')) {
       panel.classList.remove('visible');
@@ -192,6 +226,7 @@
   document.addEventListener('keydown', e => {
     if (e.key === 'ArrowRight') move(1);
     if (e.key === 'ArrowLeft')  move(-1);
+    if (e.key === 'f' || e.key === 'F') toggleFullscreen();
   });
 
   detectPages(1, buildViewer);
