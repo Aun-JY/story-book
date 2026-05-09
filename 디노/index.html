@@ -43,6 +43,42 @@
     .zone.next { right: 0;  width: 25%; }
     .zone.mid  { left: 25%; width: 50%; cursor: default; }
 
+    /* 시작 오버레이 */
+    .start-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      background: rgba(0,0,0,0.75);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      cursor: pointer;
+      backdrop-filter: blur(4px);
+    }
+    .start-overlay.hide {
+      animation: fadeOut .4s ease forwards;
+      pointer-events: none;
+    }
+    @keyframes fadeOut { to { opacity: 0; } }
+
+    .start-title {
+      color: #ffe87a;
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      text-shadow: 0 2px 12px rgba(0,0,0,0.7);
+    }
+    .start-hint {
+      color: rgba(255,255,255,0.8);
+      font-size: clamp(1.2rem, 2.5vw, 2rem);
+      animation: blink 1.4s ease-in-out infinite;
+    }
+    @keyframes blink {
+      0%,100% { opacity: .4; }
+      50%      { opacity: 1; }
+    }
+
+    /* 하단 UI 패널 */
     .ui-panel {
       position: fixed;
       bottom: 0;
@@ -64,13 +100,9 @@
       pointer-events: auto;
     }
 
-    .dots {
-      display: flex;
-      gap: 9px;
-    }
+    .dots { display: flex; gap: 9px; }
     .dot {
-      width: 10px;
-      height: 10px;
+      width: 10px; height: 10px;
       border-radius: 50%;
       background: rgba(255,255,255,0.35);
       cursor: pointer;
@@ -83,7 +115,6 @@
       align-items: center;
       gap: 12px;
     }
-
     .btn-ui {
       color: #fff;
       font-family: 'Jua', sans-serif;
@@ -128,11 +159,16 @@
   </div>
 </div>
 
+<!-- 시작 오버레이 -->
+<div class="start-overlay" id="start-overlay" onclick="startViewer()">
+  <div class="start-title">🦕 디노의 이야기</div>
+  <div class="start-hint">화면을 눌러 시작하기 ✨</div>
+</div>
+
 <script>
   let pages = [];
   let cur = 0;
   let hideTimer = null;
-  let firstClick = true;
 
   const stage  = document.getElementById('stage');
   const dotsEl = document.getElementById('dots');
@@ -162,7 +198,15 @@
     btnFs.textContent = isFs() ? '✕ 전체화면 끄기' : '⛶ 전체화면';
   }
 
-  /* 페이지 이동 */
+  /* 시작 오버레이 클릭 → 전체화면 + 오버레이 제거 */
+  function startViewer() {
+    requestFs();
+    const overlay = document.getElementById('start-overlay');
+    overlay.classList.add('hide');
+    setTimeout(() => overlay.remove(), 400);
+  }
+
+  /* 이미지 감지 */
   function detectPages(index, done) {
     const img = new Image();
     img.onload  = () => { pages.push(index + '.png'); detectPages(index + 1, done); };
@@ -199,21 +243,11 @@
   }
 
   function move(dir) {
-    tryFullscreen();
     const next = cur + dir;
     if (next >= 0 && next < pages.length) goTo(next);
   }
 
-  /* 첫 클릭 시 전체화면 시도 */
-  function tryFullscreen() {
-    if (firstClick) {
-      firstClick = false;
-      requestFs();
-    }
-  }
-
   function toggleUI() {
-    tryFullscreen();
     clearTimeout(hideTimer);
     if (panel.classList.contains('visible')) {
       panel.classList.remove('visible');
@@ -227,6 +261,7 @@
     if (e.key === 'ArrowRight') move(1);
     if (e.key === 'ArrowLeft')  move(-1);
     if (e.key === 'f' || e.key === 'F') toggleFullscreen();
+    if (e.key === 'Enter' || e.key === ' ') startViewer();
   });
 
   detectPages(1, buildViewer);
