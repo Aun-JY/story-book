@@ -7,37 +7,23 @@
   <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet" />
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-
     body {
       font-family: 'Jua', sans-serif;
-      width: 100vw;
-      height: 100dvh;
-      overflow: hidden;
-      background: #000;
+      width: 100vw; height: 100dvh;
+      overflow: hidden; background: #000;
     }
-
-    .slide-container {
-      position: fixed;
-      inset: 0;
-      z-index: 0;
-    }
+    .slide-container { position: fixed; inset: 0; z-index: 0; }
     .page-img {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
-      opacity: 0;
-      transition: opacity .45s ease;
+      position: absolute; inset: 0;
+      width: 100%; height: 100%;
+      object-fit: contain; opacity: 0;
+      transition: opacity .4s ease;
     }
     .page-img.active { opacity: 1; }
 
     .zone {
-      position: fixed;
-      top: 0;
-      bottom: 0;
-      z-index: 10;
-      cursor: pointer;
+      position: fixed; top: 0; bottom: 0;
+      z-index: 10; cursor: pointer;
     }
     .zone.prev { left: 0;   width: 25%; }
     .zone.next { right: 0;  width: 25%; }
@@ -45,99 +31,84 @@
 
     /* 시작 오버레이 */
     .start-overlay {
-      position: fixed;
-      inset: 0;
-      z-index: 200;
-      background: rgba(0,0,0,0.75);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 20px;
-      cursor: pointer;
+      position: fixed; inset: 0; z-index: 200;
+      background: rgba(0,0,0,0.78);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 20px; cursor: pointer;
       backdrop-filter: blur(4px);
+      transition: opacity .4s ease;
     }
-    .start-overlay.hide {
-      animation: fadeOut .4s ease forwards;
-      pointer-events: none;
-    }
-    @keyframes fadeOut { to { opacity: 0; } }
-
+    .start-overlay.hide { opacity: 0; pointer-events: none; }
     .start-title {
       color: #ffe87a;
       font-size: clamp(2rem, 5vw, 3.5rem);
       text-shadow: 0 2px 12px rgba(0,0,0,0.7);
     }
     .start-hint {
-      color: rgba(255,255,255,0.8);
+      color: rgba(255,255,255,0.85);
       font-size: clamp(1.2rem, 2.5vw, 2rem);
       animation: blink 1.4s ease-in-out infinite;
     }
-    @keyframes blink {
-      0%,100% { opacity: .4; }
-      50%      { opacity: 1; }
+    @keyframes blink { 0%,100%{opacity:.4} 50%{opacity:1} }
+
+    /* 상단 고정 버튼 (시작 후 표시) */
+    .top-bar {
+      position: fixed; top: 16px; left: 16px;
+      z-index: 150;
+      opacity: 0; pointer-events: none;
+      transition: opacity .4s ease;
     }
+    .top-bar.show { opacity: 1; pointer-events: all; }
+    .btn-top {
+      color: #fff; font-size: 1.5rem;
+      background: rgba(0,0,0,0.55);
+      border: 2px solid rgba(255,255,255,0.5);
+      border-radius: 999px;
+      width: 52px; height: 52px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; backdrop-filter: blur(8px);
+      box-shadow: 0 2px 12px rgba(0,0,0,0.5);
+      transition: background .2s;
+    }
+    .btn-top:hover { background: rgba(0,0,0,0.8); }
 
     /* 하단 UI 패널 */
     .ui-panel {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
+      position: fixed; bottom: 0; left: 0; right: 0;
       z-index: 30;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 14px;
+      display: flex; flex-direction: column;
+      align-items: center; gap: 14px;
       padding: 20px 24px 28px;
-      background: linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 100%);
-      opacity: 0;
-      pointer-events: none;
+      background: linear-gradient(to top, rgba(0,0,0,0.6), transparent);
+      opacity: 0; pointer-events: none;
       transition: opacity .35s ease;
     }
-    .ui-panel.visible {
-      opacity: 1;
-      pointer-events: auto;
-    }
-
+    .ui-panel.visible { opacity: 1; pointer-events: auto; }
     .dots { display: flex; gap: 9px; }
     .dot {
-      width: 10px; height: 10px;
-      border-radius: 50%;
-      background: rgba(255,255,255,0.35);
-      cursor: pointer;
+      width: 10px; height: 10px; border-radius: 50%;
+      background: rgba(255,255,255,0.35); cursor: pointer;
       transition: background .3s, transform .3s;
     }
     .dot.active { background: #fff; transform: scale(1.5); }
-
-    .bottom-row {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
+    .bottom-row { display: flex; align-items: center; gap: 12px; }
     .btn-ui {
-      color: #fff;
-      font-family: 'Jua', sans-serif;
-      font-size: 1.2rem;
+      color: #fff; font-family: 'Jua', sans-serif; font-size: 1.2rem;
       text-decoration: none;
       background: rgba(0,0,0,0.38);
       border: 2px solid rgba(255,255,255,0.4);
-      border-radius: 999px;
-      padding: 10px 24px;
+      border-radius: 999px; padding: 10px 24px;
       backdrop-filter: blur(8px);
+      white-space: nowrap; cursor: pointer;
       transition: background .2s;
-      white-space: nowrap;
-      cursor: pointer;
     }
     .btn-ui:hover { background: rgba(0,0,0,0.6); }
-
     .page-counter {
-      color: #fff;
-      font-size: .95rem;
+      color: #fff; font-size: .95rem;
       background: rgba(0,0,0,0.28);
       border: 1.5px solid rgba(255,255,255,0.2);
-      border-radius: 999px;
-      padding: 8px 18px;
+      border-radius: 999px; padding: 8px 18px;
       backdrop-filter: blur(6px);
     }
   </style>
@@ -145,6 +116,8 @@
 <body>
 
 <div class="slide-container" id="stage"></div>
+
+<div class="top-bar" id="top-bar"></div>
 
 <div class="zone prev" onclick="move(-1)"></div>
 <div class="zone mid"  onclick="toggleUI()"></div>
@@ -159,31 +132,29 @@
   </div>
 </div>
 
-<!-- 시작 오버레이 -->
 <div class="start-overlay" id="start-overlay" onclick="startViewer()">
   <div class="start-title">🦖 티노의 이야기</div>
   <div class="start-hint">화면을 눌러 시작하기 ✨</div>
 </div>
 
 <script>
+  const MAX_PAGES = 50;
   let pages = [];
   let cur = 0;
   let hideTimer = null;
   let wakeLock = null;
+  let started = false;
 
   const stage  = document.getElementById('stage');
   const dotsEl = document.getElementById('dots');
   const counter= document.getElementById('counter');
   const panel  = document.getElementById('ui-panel');
   const btnFs  = document.getElementById('btn-fs');
+  const topBar = document.getElementById('top-bar');
 
   /* 화면 꺼짐 방지 */
   async function requestWakeLock() {
-    try {
-      if ('wakeLock' in navigator) {
-        wakeLock = await navigator.wakeLock.request('screen');
-      }
-    } catch (e) { /* 미지원 환경 무시 */ }
+    try { if ('wakeLock' in navigator) wakeLock = await navigator.wakeLock.request('screen'); } catch(e){}
   }
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') requestWakeLock();
@@ -192,50 +163,64 @@
   /* 전체화면 */
   function requestFs() {
     const el = document.documentElement;
-    if (el.requestFullscreen)            el.requestFullscreen();
+    if (el.requestFullscreen) el.requestFullscreen();
     else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
   }
-  function exitFs() {
-    if (document.exitFullscreen)            document.exitFullscreen();
-    else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
-  }
-  function isFs() {
-    return !!(document.fullscreenElement || document.webkitFullscreenElement);
-  }
+  function isFs() { return !!(document.fullscreenElement || document.webkitFullscreenElement); }
   function toggleFullscreen() {
-    isFs() ? exitFs() : requestFs();
+    if (isFs()) {
+      (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+    } else { requestFs(); }
   }
-  document.addEventListener('fullscreenchange',       updateFsBtn);
+  document.addEventListener('fullscreenchange', updateFsBtn);
   document.addEventListener('webkitfullscreenchange', updateFsBtn);
-  function updateFsBtn() {
-    btnFs.textContent = isFs() ? '✕ 전체화면 끄기' : '⛶ 전체화면';
-  }
+  function updateFsBtn() { btnFs.textContent = isFs() ? '✕ 전체화면 끄기' : '⛶ 전체화면'; }
 
-  /* 시작 오버레이 클릭 */
+  /* 시작 */
   function startViewer() {
+    if (started) return;
+    started = true;
     requestFs();
     requestWakeLock();
     const overlay = document.getElementById('start-overlay');
     overlay.classList.add('hide');
     setTimeout(() => overlay.remove(), 400);
+    topBar.classList.add('show');
   }
 
-  /* 이미지 감지 */
-  function detectPages(index, done) {
-    const img = new Image();
-    img.onload  = () => { pages.push(index + '.png'); detectPages(index + 1, done); };
-    img.onerror = () => done();
-    img.src = index + '.png?t=' + Date.now();
+  /* ── 병렬 이미지 감지 ── */
+  function detectPagesParallel() {
+    const status = new Array(MAX_PAGES + 1).fill(undefined);
+
+    function check() {
+      const found = [];
+      for (let i = 1; i <= MAX_PAGES; i++) {
+        if (status[i] === true) found.push(i + '.png');
+        else break; // 연속된 것만
+      }
+      if (found.length > pages.length) {
+        pages = found;
+        buildViewer();
+      }
+    }
+
+    for (let i = 1; i <= MAX_PAGES; i++) {
+      (function(idx) {
+        const img = new Image();
+        img.onload  = () => { status[idx] = true;  check(); };
+        img.onerror = () => { status[idx] = false; check(); };
+        img.src = idx + '.png';
+      })(i);
+    }
   }
 
+  /* 뷰어 빌드 (증분 업데이트) */
   function buildViewer() {
-    stage.innerHTML = '';
-    dotsEl.innerHTML = '';
-    cur = 0;
-    pages.forEach((src, i) => {
+    // 새로 추가된 페이지만 append
+    for (let i = stage.children.length; i < pages.length; i++) {
       const img = document.createElement('img');
       img.className = 'page-img' + (i === 0 ? ' active' : '');
-      img.src = src;
+      img.src = pages[i];
       img.alt = `${i + 1}페이지`;
       stage.appendChild(img);
 
@@ -243,8 +228,14 @@
       dot.className = 'dot' + (i === 0 ? ' active' : '');
       dot.onclick = () => goTo(i);
       dotsEl.appendChild(dot);
-    });
-    counter.textContent = `1 / ${pages.length}`;
+    }
+    counter.textContent = `${cur + 1} / ${pages.length}`;
+
+    // 다음 페이지 미리 로드
+    if (pages[cur + 1]) {
+      const pre = new Image();
+      pre.src = pages[cur + 1];
+    }
   }
 
   function goTo(n) {
@@ -254,6 +245,8 @@
     document.querySelectorAll('.page-img')[cur].classList.add('active');
     document.querySelectorAll('.dot')[cur].classList.add('active');
     counter.textContent = `${cur + 1} / ${pages.length}`;
+    // 다음 페이지 미리 로드
+    if (pages[cur + 1]) { const pre = new Image(); pre.src = pages[cur + 1]; }
   }
 
   function move(dir) {
@@ -278,7 +271,7 @@
     if (e.key === 'Enter' || e.key === ' ') startViewer();
   });
 
-  detectPages(1, buildViewer);
+  detectPagesParallel();
 </script>
 </body>
 </html>
