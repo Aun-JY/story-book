@@ -78,6 +78,32 @@
       50%      { opacity: 1; }
     }
 
+    /* 상단 고정 버튼들 */
+    .top-bar {
+      position: fixed;
+      top: 16px;
+      left: 16px;
+      z-index: 30;
+      display: flex;
+      gap: 10px;
+    }
+    .btn-top {
+      color: #fff;
+      font-size: 1.6rem;
+      background: rgba(0,0,0,0.38);
+      border: 2px solid rgba(255,255,255,0.3);
+      border-radius: 999px;
+      width: 52px;
+      height: 52px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      backdrop-filter: blur(8px);
+      transition: background .2s;
+    }
+    .btn-top:hover { background: rgba(0,0,0,0.6); }
+
     /* 하단 UI 패널 */
     .ui-panel {
       position: fixed;
@@ -144,10 +170,14 @@
 </head>
 <body>
 
-<!-- 배경음악 -->
 <audio id="bgm" src="DINO.mp3" loop preload="auto"></audio>
 
 <div class="slide-container" id="stage"></div>
+
+<!-- 상단 고정: 음소거 버튼 -->
+<div class="top-bar">
+  <button class="btn-top" id="btn-mute" onclick="toggleMute()" title="음소거">🔊</button>
+</div>
 
 <div class="zone prev" onclick="move(-1)"></div>
 <div class="zone mid"  onclick="toggleUI()"></div>
@@ -158,7 +188,6 @@
   <div class="bottom-row">
     <a class="btn-ui" href="../index.html">← 처음으로</a>
     <span class="page-counter" id="counter"></span>
-    <button class="btn-ui" id="btn-mute" onclick="toggleMute()">🔊</button>
     <button class="btn-ui" id="btn-fs" onclick="toggleFullscreen()">⛶ 전체화면</button>
   </div>
 </div>
@@ -175,13 +204,13 @@
   let hideTimer = null;
   let wakeLock = null;
 
-  const stage  = document.getElementById('stage');
-  const dotsEl = document.getElementById('dots');
-  const counter= document.getElementById('counter');
-  const panel  = document.getElementById('ui-panel');
-  const btnFs  = document.getElementById('btn-fs');
-  const btnMute= document.getElementById('btn-mute');
-  const bgm    = document.getElementById('bgm');
+  const stage   = document.getElementById('stage');
+  const dotsEl  = document.getElementById('dots');
+  const counter = document.getElementById('counter');
+  const panel   = document.getElementById('ui-panel');
+  const btnFs   = document.getElementById('btn-fs');
+  const btnMute = document.getElementById('btn-mute');
+  const bgm     = document.getElementById('bgm');
 
   /* 화면 꺼짐 방지 */
   async function requestWakeLock() {
@@ -189,7 +218,7 @@
       if ('wakeLock' in navigator) {
         wakeLock = await navigator.wakeLock.request('screen');
       }
-    } catch (e) { /* 미지원 환경 무시 */ }
+    } catch (e) {}
   }
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') requestWakeLock();
@@ -223,12 +252,22 @@
     btnMute.textContent = bgm.muted ? '🔇' : '🔊';
   }
 
-  /* 시작 오버레이 클릭 */
+  /* 시작 오버레이 클릭 → 전체화면 + 음악 + wake lock */
   function startViewer() {
+    const overlay = document.getElementById('start-overlay');
+    if (!overlay) return;
+
     requestFs();
     requestWakeLock();
-    bgm.play();
-    const overlay = document.getElementById('start-overlay');
+
+    bgm.volume = 0.7;
+    bgm.play().catch(() => {
+      // 자동재생 차단된 경우 음소거 후 재시도
+      bgm.muted = true;
+      btnMute.textContent = '🔇';
+      bgm.play().catch(() => {});
+    });
+
     overlay.classList.add('hide');
     setTimeout(() => overlay.remove(), 400);
   }
