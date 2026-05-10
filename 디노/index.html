@@ -144,6 +144,9 @@
 </head>
 <body>
 
+<!-- 배경음악 -->
+<audio id="bgm" src="DINO.mp3" loop preload="auto"></audio>
+
 <div class="slide-container" id="stage"></div>
 
 <div class="zone prev" onclick="move(-1)"></div>
@@ -155,6 +158,7 @@
   <div class="bottom-row">
     <a class="btn-ui" href="../index.html">← 처음으로</a>
     <span class="page-counter" id="counter"></span>
+    <button class="btn-ui" id="btn-mute" onclick="toggleMute()">🔊</button>
     <button class="btn-ui" id="btn-fs" onclick="toggleFullscreen()">⛶ 전체화면</button>
   </div>
 </div>
@@ -169,12 +173,27 @@
   let pages = [];
   let cur = 0;
   let hideTimer = null;
+  let wakeLock = null;
 
   const stage  = document.getElementById('stage');
   const dotsEl = document.getElementById('dots');
   const counter= document.getElementById('counter');
   const panel  = document.getElementById('ui-panel');
   const btnFs  = document.getElementById('btn-fs');
+  const btnMute= document.getElementById('btn-mute');
+  const bgm    = document.getElementById('bgm');
+
+  /* 화면 꺼짐 방지 */
+  async function requestWakeLock() {
+    try {
+      if ('wakeLock' in navigator) {
+        wakeLock = await navigator.wakeLock.request('screen');
+      }
+    } catch (e) { /* 미지원 환경 무시 */ }
+  }
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') requestWakeLock();
+  });
 
   /* 전체화면 */
   function requestFs() {
@@ -198,9 +217,17 @@
     btnFs.textContent = isFs() ? '✕ 전체화면 끄기' : '⛶ 전체화면';
   }
 
-  /* 시작 오버레이 클릭 → 전체화면 + 오버레이 제거 */
+  /* 음소거 토글 */
+  function toggleMute() {
+    bgm.muted = !bgm.muted;
+    btnMute.textContent = bgm.muted ? '🔇' : '🔊';
+  }
+
+  /* 시작 오버레이 클릭 */
   function startViewer() {
     requestFs();
+    requestWakeLock();
+    bgm.play();
     const overlay = document.getElementById('start-overlay');
     overlay.classList.add('hide');
     setTimeout(() => overlay.remove(), 400);
@@ -261,6 +288,7 @@
     if (e.key === 'ArrowRight') move(1);
     if (e.key === 'ArrowLeft')  move(-1);
     if (e.key === 'f' || e.key === 'F') toggleFullscreen();
+    if (e.key === 'm' || e.key === 'M') toggleMute();
     if (e.key === 'Enter' || e.key === ' ') startViewer();
   });
 

@@ -169,12 +169,25 @@
   let pages = [];
   let cur = 0;
   let hideTimer = null;
+  let wakeLock = null;
 
   const stage  = document.getElementById('stage');
   const dotsEl = document.getElementById('dots');
   const counter= document.getElementById('counter');
   const panel  = document.getElementById('ui-panel');
   const btnFs  = document.getElementById('btn-fs');
+
+  /* 화면 꺼짐 방지 */
+  async function requestWakeLock() {
+    try {
+      if ('wakeLock' in navigator) {
+        wakeLock = await navigator.wakeLock.request('screen');
+      }
+    } catch (e) { /* 미지원 환경 무시 */ }
+  }
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') requestWakeLock();
+  });
 
   /* 전체화면 */
   function requestFs() {
@@ -198,9 +211,10 @@
     btnFs.textContent = isFs() ? '✕ 전체화면 끄기' : '⛶ 전체화면';
   }
 
-  /* 시작 오버레이 클릭 → 전체화면 + 오버레이 제거 */
+  /* 시작 오버레이 클릭 */
   function startViewer() {
     requestFs();
+    requestWakeLock();
     const overlay = document.getElementById('start-overlay');
     overlay.classList.add('hide');
     setTimeout(() => overlay.remove(), 400);
